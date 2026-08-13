@@ -124,7 +124,6 @@ const selectedReceptors = computed<string[]>({
 
 const requiredCanonicalBase = [
   { key: "cdr3-aa", label: "CDR3 aa" },
-  { key: "cdr3-nt", label: "CDR3 nt" },
   { key: "v-gene", label: "V gene" },
   { key: "j-gene", label: "J gene" },
 ];
@@ -394,7 +393,7 @@ function onModalUpdate(val: boolean) {
       <!-- receptor selector for single-cell formats can be added here if needed -->
 
       <template v-if="app.model.args.format === 'custom'">
-        <PlSectionSeparator>Required columns</PlSectionSeparator>
+        <PlSectionSeparator>Required columns — Aria Columns</PlSectionSeparator>
         <div class="field-col">
           <PlDropdown
             v-for="f in requiredCanonicalBase"

@@ -19,7 +19,8 @@
   "devDependencies": {
     "@milaboratories/helpers": "catalog:",
     "@milaboratories/ts-builder": "catalog:",
-    "@milaboratories/ts-configs": "catalog:"
+    "@milaboratories/ts-configs": "catalog:",
+    "sass-embedded": "^1.100.0"
   },
   "peerDependencies": {
     "@types/node": "*",
