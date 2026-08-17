@@ -393,7 +393,7 @@ function onModalUpdate(val: boolean) {
       <!-- receptor selector for single-cell formats can be added here if needed -->
 
       <template v-if="app.model.args.format === 'custom'">
-        <PlSectionSeparator>Required columns — Aria Columns</PlSectionSeparator>
+        <PlSectionSeparator>Required columns — Aria's Columns</PlSectionSeparator>
         <div class="field-col">
           <PlDropdown
             v-for="f in requiredCanonicalBase"
