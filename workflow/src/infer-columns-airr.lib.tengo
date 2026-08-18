@@ -25,6 +25,11 @@ sourceAliases := {
 	"cdr3": "cdr3-nt",
 	"full_aa": "full-aa",
 	"fwr1_aa": "fr1-aa",
+	"cdr1_aa": "cdr1-aa",
+	"fwr2_aa": "fr2-aa",
+	"cdr2_aa": "cdr2-aa",
+	"fwr3_aa": "fr3-aa",
+	"fwr4_aa": "fr4-aa",
 
 	// gene calls
 	"v_call": "v-gene",
@@ -157,6 +162,21 @@ getColumns := func(header) {
 	}
 	if columnMapping["fr1-aa"] != undefined {
 		propertyColumns = append(propertyColumns, propertyColumnSpecs["fr1-aa"])
+	}
+	if columnMapping["cdr1-aa"] != undefined {
+		propertyColumns = append(propertyColumns, propertyColumnSpecs["cdr1-aa"])
+	}
+	if columnMapping["fr2-aa"] != undefined {
+		propertyColumns = append(propertyColumns, propertyColumnSpecs["fr2-aa"])
+	}
+	if columnMapping["cdr2-aa"] != undefined {
+		propertyColumns = append(propertyColumns, propertyColumnSpecs["cdr2-aa"])
+	}
+	if columnMapping["fr3-aa"] != undefined {
+		propertyColumns = append(propertyColumns, propertyColumnSpecs["fr3-aa"])
+	}
+	if columnMapping["fr4-aa"] != undefined {
+		propertyColumns = append(propertyColumns, propertyColumnSpecs["fr4-aa"])
 	}
 	if columnMapping["full-aa"] != undefined && propertyColumnSpecs["full-aa"] != undefined {
 		propertyColumns = append(propertyColumns, propertyColumnSpecs["full-aa"])
