@@ -288,8 +288,7 @@ self.body(func(inputs) {
 				selectedProps := columnsInfo.propertyColumns
 				if !isPrimary {
 					selectedProps = []
-					for col in columnsInfo.propertyColumns { if col.column == "cdr3-aa" || col.column == "cdr3-nt" { selectedProps += [col] } }
-				}
+					for col in columnsInfo.propertyColumns { if col.column == "cdr3-aa" || col.column == "cdr3-nt" || col.column == "full-aa" { selectedProps += [col] } } }
 				scOutputs += [ {
 					type: "Xsv",
 					xsvType: "tsv",
@@ -302,7 +301,7 @@ self.body(func(inputs) {
 								if !is_undefined(col.spec) && !is_undefined(col.spec.annotations) && !is_undefined(col.spec.annotations["pl7.app/label"]) {
 									originalLabel = col.spec.annotations["pl7.app/label"]
 								}
-								isTargetPrimary := (col.column == "cdr3-aa") || (col.column == "v-gene") || (col.column == "j-gene") || (col.column == "d-gene") || (col.column == "c-gene")
+								isTargetPrimary := (col.column == "cdr3-aa") || (col.column == "v-gene") || (col.column == "j-gene") || (col.column == "d-gene") || (col.column == "c-gene") || (col.column == "full-aa")
 								isTCRReceptor := receptor == "TCRAB" || receptor == "TCRGD"
 								desiredVisibility := (isPrimary && isTargetPrimary) ? "default" : "optional"
 								if isTCRReceptor {

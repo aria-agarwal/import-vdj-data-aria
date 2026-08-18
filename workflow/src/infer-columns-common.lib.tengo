@@ -516,6 +516,23 @@ propertyColumnSpecs := {
 			})
 		}
 	},
+	"full-aa": {
+		id: "full-aa",
+		column: "full-aa",
+		allowNA: true,
+		spec: {
+			name: "pl7.app/vdj/fullAA",
+			valueType: "String",
+			domain: {
+				"pl7.app/alphabet": "aminoacid",
+				"pl7.app/vdj/feature": "FullLength"
+			},
+			annotations: a(46865, false, {
+				"pl7.app/label": "Full AA",
+				"pl7.app/table/fontFamily": "monospace"
+			})
+		}
+	},
 	"vdj-aa": {
 		id: "vdj-aa",
 		column: "vdj-aa",
