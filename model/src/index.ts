@@ -18,7 +18,8 @@ export type BlockArgs = {
     | "cellranger"
     | "airr"
     | "airr-sc"
-    | "custom";
+    | "custom"
+    | "custom-sc";
   chains: string[];
   customMapping?: Record<string, string | undefined>;
   primaryCountType?: "read" | "umi";
@@ -72,6 +73,17 @@ export const model = BlockModel.create()
       const pct = primaryCountType ?? "read";
       const hasPrimaryAbundance = pct === "umi" ? !!m["umi-count"] : !!m["read-count"];
       return hasSeq && hasV && hasJ && hasPrimaryAbundance;
+    }
+
+    if (format === "custom-sc") {
+      const m = customMapping ?? {};
+      const hasSeq = !!m["cdr3-nt"] || !!m["cdr3-aa"];
+      const hasV = !!m["v-gene"];
+      const hasJ = !!m["j-gene"];
+      const pct = primaryCountType ?? "read";
+      const hasPrimaryAbundance = pct === "umi" ? !!m["umi-count"] : !!m["read-count"];
+      const hasCellId = !!m["cell_id"];
+      return hasSeq && hasV && hasJ && hasPrimaryAbundance && hasCellId;
     }
 
     if (format === "qiagen") {

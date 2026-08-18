@@ -31,6 +31,7 @@ const formatOptions = [
   { label: "AIRR bulk", value: "airr" },
   { label: "AIRR single cell", value: "airr-sc" },
   { label: "Custom", value: "custom" },
+  { label: "Custom paired", value: "custom-sc" },
 ];
 
 const chainsOptions = [
@@ -85,7 +86,8 @@ const isSingleCell = computed(
   () =>
     app.model.args.format === "mixcr-sc" ||
     app.model.args.format === "cellranger" ||
-    app.model.args.format === "airr-sc",
+    app.model.args.format === "airr-sc" ||
+    app.model.args.format === "custom-sc",
 );
 
 const tableSettings = usePlDataTableSettingsV2({
@@ -247,7 +249,7 @@ const validationMessage = computed(() => {
 watch(
   () => app.model.args,
   (args) => {
-    if (args.format === "custom") {
+    if (args.format === "custom" || args.format === "custom-sc") {
       const a = app.model.args as unknown as {
         customMapping?: Record<string, string>;
         primaryCountType?: "read" | "umi";
@@ -309,7 +311,9 @@ watch(
 );
 
 const forceSettingsOpen = computed(() => {
-  const mustStayOpen = app.model.args.format === "custom" && !mappingComplete.value;
+  const mustStayOpen =
+    (app.model.args.format === "custom" || app.model.args.format === "custom-sc") &&
+    !mappingComplete.value;
   return app.model.ui.settingsOpen || mustStayOpen;
 });
 

@@ -106,6 +106,19 @@ specs := {
 			return custom.getColumns(header, customMapping, primaryCountType)
 		}
 	},
+	"custom-sc": {
+		id: "custom-sc",
+		label: "Custom paired",
+		isSingleCell: true,
+		importTplId: ":import-custom",
+		infer: func(header, opts) {
+			// opts.customMapping and opts.primaryCountType are required once mapping is complete;
+			// infer-columns.tpl already gates incomplete mapping by returning headerColumns.
+			customMapping := is_undefined(opts) ? undefined : opts.customMapping
+			primaryCountType := is_undefined(opts) ? undefined : opts.primaryCountType
+			return custom.getColumns(header, customMapping, primaryCountType)
+		}
+	},
 	"airr": {
 		id: "airr",
 		label: "AIRR",
@@ -149,7 +162,7 @@ specs := {
 list := func() {
 	out := []
 	// Stable order for UI
-	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom"] {
+	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom", "custom-sc"] {
 		s := specs[id]
 		out = append(out, { id: s.id, label: s.label, isSingleCell: s.isSingleCell })
 	}
