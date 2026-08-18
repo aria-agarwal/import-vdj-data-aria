@@ -148,6 +148,7 @@ const optionalSequence = [
 ];
 
 const optionalCanonical = [
+  { key: "cell_id", label: "Cell ID" },
   { key: "top-chains", label: "Top chains" },
   { key: "v-allele", label: "V allele" },
   { key: "j-allele", label: "J allele" },
@@ -396,7 +397,7 @@ function onModalUpdate(val: boolean) {
       />
       <!-- receptor selector for single-cell formats can be added here if needed -->
 
-      <template v-if="app.model.args.format === 'custom'">
+      <template v-if="app.model.args.format === 'custom' || app.model.args.format === 'custom-sc'">
         <PlSectionSeparator>Required columns — Aria's Columns</PlSectionSeparator>
         <div class="field-col">
           <PlDropdown

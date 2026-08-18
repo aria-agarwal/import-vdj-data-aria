@@ -56,7 +56,7 @@ self.body(func(inputs) {
     }
 
     // if custom, treat undefined or empty/incomplete mapping as not ready
-    if format == "custom" && (inputs.customMapping == undefined || 
+    if (format == "custom" || format == "custom-sc") && (inputs.customMapping == undefined || 
         (is_undefined(inputs.customMapping["cdr3-nt"]) &&
             is_undefined(inputs.customMapping["cdr3-aa"])) ||
         (is_undefined(inputs.customMapping["v-gene"]) ||
