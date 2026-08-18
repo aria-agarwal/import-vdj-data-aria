@@ -166,109 +166,124 @@ self.body(func(inputs) {
     }
 
     chainColumn := hasTopChains ? "top-chains" : "v-gene"
-    for chain in chains {
-        prefixes := chainToLocusMap[chain]
+    if inputs.format == "custom-sc" {
+        cellTagColumns := columnsInfo.cellTagColumns
+        if cellTagColumns == undefined || len(cellTagColumns) == 0 {
+            ll.panic("custom-sc requires a mapped cell_id column")
+        }
 
-        chainDf := undefined
-        if chain == "IGLight" {
-            chainDf = df.filter(
-                pt.col(chainColumn).strSlice(0, 3).eq("IGK").or(pt.col(chainColumn).strSlice(0, 3).eq("IGL"))
-            )
-        } else {
-            filterExpr := undefined
-            for i := 0; i < len(prefixes); i++ {
-                prefix := prefixes[i]
-                expr := pt.col(chainColumn).strSlice(0, len(prefix)).eq(prefix)
-                if i == 0 {
-                    filterExpr = expr
-                } else {
-                    filterExpr = filterExpr.or(expr)
+        cellIdColumn := cellTagColumns[0]
+        scDf := df.filter(pt.col(cellIdColumn).isNotNull().and(pt.col(cellIdColumn).neq("")))
+        scDf.save("custom-sc.tsv")
+    } else {
+        for chain in chains {
+            prefixes := chainToLocusMap[chain]
+
+            chainDf := undefined
+            if chain == "IGLight" {
+                chainDf = df.filter(
+                    pt.col(chainColumn).strSlice(0, 3).eq("IGK").or(pt.col(chainColumn).strSlice(0, 3).eq("IGL"))
+                )
+            } else {
+                filterExpr := undefined
+                for i := 0; i < len(prefixes); i++ {
+                    prefix := prefixes[i]
+                    expr := pt.col(chainColumn).strSlice(0, len(prefix)).eq(prefix)
+                    if i == 0 {
+                        filterExpr = expr
+                    } else {
+                        filterExpr = filterExpr.or(expr)
+                    }
                 }
+                chainDf = df.filter(filterExpr)
             }
-            chainDf = df.filter(filterExpr)
-        }
 
-        // If cdr3-aa provided, compute productivity and filter to productive
-        if hasAA {
-            chainDf = chainDf.withColumns(
-                pt.col("cdr3-aa").isNotNull().
-                    and(pt.col("cdr3-aa").neq("")).
-                    and(pt.col("cdr3-aa").strContains("*", { literal: true }).not()).
-                    and(pt.col("cdr3-aa").strContains("_", { literal: true }).not()).
-                    alias("is-productive")
-            )
-            chainDf = chainDf.filter(pt.col("is-productive"))
+            // If cdr3-aa provided, compute productivity and filter to productive
+            if hasAA {
+                chainDf = chainDf.withColumns(
+                    pt.col("cdr3-aa").isNotNull().
+                        and(pt.col("cdr3-aa").neq("")).
+                        and(pt.col("cdr3-aa").strContains("*", { literal: true }).not()).
+                        and(pt.col("cdr3-aa").strContains("_", { literal: true }).not()).
+                        alias("is-productive")
+                )
+                chainDf = chainDf.filter(pt.col("is-productive"))
 
-            // Standardize productivity flag to lowercase string values
-            chainDf = chainDf.withColumns(
-                pt.when(pt.col("is-productive")).then(pt.lit("true")).otherwise(pt.lit("false")).alias("is-productive")
-            )
-        }
+                // Standardize productivity flag to lowercase string values
+                chainDf = chainDf.withColumns(
+                    pt.when(pt.col("is-productive")).then(pt.lit("true")).otherwise(pt.lit("false")).alias("is-productive")
+                )
+            }
 
-        // Derive lengths if available
-        if hasAA {
-            chainDf = chainDf.withColumns(pt.col("cdr3-aa").strLenChars().alias("cdr3-aa-length"))
-        }
-        if hasNT {
-            chainDf = chainDf.withColumns(pt.col("cdr3-nt").strLenChars().alias("cdr3-nt-length"))
-        }
+            // Derive lengths if available
+            if hasAA {
+                chainDf = chainDf.withColumns(pt.col("cdr3-aa").strLenChars().alias("cdr3-aa-length"))
+            }
+            if hasNT {
+                chainDf = chainDf.withColumns(pt.col("cdr3-nt").strLenChars().alias("cdr3-nt-length"))
+            }
 
-        chainDf = chainDf.withColumns(clonotypeKeyExpr)
+            chainDf = chainDf.withColumns(clonotypeKeyExpr)
 
-        // Abundance columns are already cast to Int64 earlier (lines 108-132)
-        // No need to cast again here
+            // Abundance columns are already cast to Int64 earlier (lines 108-132)
+            // No need to cast again here
 
-        // Aggregate by clonotypeKey using whichever abundance exists
-        aggregations := []
-        if hasReads {
-            aggregations = append(aggregations, pt.col("read-count").sum().alias("read-count"))
-        }
-        if hasUMIs {
-            aggregations = append(aggregations, pt.col("umi-count").sum().alias("umi-count"))
-        }
-        for col in columnsInfo.propertyColumns {
-            aggregations = append(aggregations, pt.col(col.column).maxBy(primaryAbundance).alias(col.column))
-        }
-        chainDf = chainDf.groupBy("clonotypeKey").agg(aggregations...)
+            // Aggregate by clonotypeKey using whichever abundance exists
+            aggregations := []
+            if hasReads {
+                aggregations = append(aggregations, pt.col("read-count").sum().alias("read-count"))
+            }
+            if hasUMIs {
+                aggregations = append(aggregations, pt.col("umi-count").sum().alias("umi-count"))
+            }
+            for col in columnsInfo.propertyColumns {
+                aggregations = append(aggregations, pt.col(col.column).maxBy(primaryAbundance).alias(col.column))
+            }
+            chainDf = chainDf.groupBy("clonotypeKey").agg(aggregations...)
 
-        // Fractions if the corresponding counts present
-        if hasReads {
-            chainDf = chainDf.withColumns(pt.col("read-count").truediv(pt.col("read-count").sum()).fillNaN(0).alias("read-fraction"))
-        }
-        if hasUMIs {
-            chainDf = chainDf.withColumns(pt.col("umi-count").truediv(pt.col("umi-count").sum()).fillNaN(0).alias("umi-fraction"))
-        }
+            // Fractions if the corresponding counts present
+            if hasReads {
+                chainDf = chainDf.withColumns(pt.col("read-count").truediv(pt.col("read-count").sum()).fillNaN(0).alias("read-fraction"))
+            }
+            if hasUMIs {
+                chainDf = chainDf.withColumns(pt.col("umi-count").truediv(pt.col("umi-count").sum()).fillNaN(0).alias("umi-fraction"))
+            }
 
-        // Keep property and abundance columns
-        keepColumns := ["clonotypeKey"]
-        for col in columnsInfo.propertyColumns {
-            keepColumns = append(keepColumns, col.column) 
-        }
-        for col in columnsInfo.abundanceColumns {
-            keepColumns = append(keepColumns, col.column)
-        }
-        chainDf = chainDf.select(keepColumns...)
+            // Keep property and abundance columns
+            keepColumns := ["clonotypeKey"]
+            for col in columnsInfo.propertyColumns {
+                keepColumns = append(keepColumns, col.column) 
+            }
+            for col in columnsInfo.abundanceColumns {
+                keepColumns = append(keepColumns, col.column)
+            }
+            chainDf = chainDf.select(keepColumns...)
 
-        chainDf.save(chain + ".tsv")
+            chainDf.save(chain + ".tsv")
 
-        statsExprs := [ pt.col("clonotypeKey").count().alias("clonotype-count") ]
-        if hasReads {
-            statsExprs = append(statsExprs, pt.col("read-count").sum().alias("read-count"))
+            statsExprs := [ pt.col("clonotypeKey").count().alias("clonotype-count") ]
+            if hasReads {
+                statsExprs = append(statsExprs, pt.col("read-count").sum().alias("read-count"))
+            }
+            if hasUMIs {
+                statsExprs = append(statsExprs, pt.col("umi-count").sum().alias("umi-count"))
+            }
+            stats := chainDf.select(statsExprs...)
+            stats.saveContent("stats-" + chain + ".tsv")
         }
-        if hasUMIs {
-            statsExprs = append(statsExprs, pt.col("umi-count").sum().alias("umi-count"))
-        }
-        stats := chainDf.select(statsExprs...)
-        stats.saveContent("stats-" + chain + ".tsv")
     }
 
     wf = wf.run()
 
     tsv := {}
     stats := {}
-    for chain in chains {
-        tsv[chain] = wf.getFile(chain + ".tsv")
-        stats[chain] = wf.getFileContent("stats-" + chain + ".tsv")
+    if inputs.format == "custom-sc" {
+        tsv["custom-sc"] = wf.getFile("custom-sc.tsv")
+    } else {
+        for chain in chains {
+            tsv[chain] = wf.getFile(chain + ".tsv")
+            stats[chain] = wf.getFileContent("stats-" + chain + ".tsv")
+        }
     }
 
     return {

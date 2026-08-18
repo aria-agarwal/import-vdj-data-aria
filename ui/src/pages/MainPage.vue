@@ -319,7 +319,9 @@ const forceSettingsOpen = computed(() => {
 });
 
 function onModalUpdate(val: boolean) {
-  const mustStayOpen = app.model.args.format === "custom" && !mappingComplete.value;
+  const mustStayOpen =
+    (app.model.args.format === "custom" || app.model.args.format === "custom-sc") &&
+    !mappingComplete.value;
   if (mustStayOpen) {
     app.model.ui.settingsOpen = true;
     return;
