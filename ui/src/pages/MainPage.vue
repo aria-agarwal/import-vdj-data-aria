@@ -31,6 +31,7 @@ const formatOptions = [
   { label: "AIRR bulk", value: "airr" },
   { label: "AIRR single cell", value: "airr-sc" },
   { label: "Custom", value: "custom" },
+  { label: "Simple paired", value: "simple-paired" },
 ];
 
 const chainsOptions = [

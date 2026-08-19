@@ -18,7 +18,8 @@ export type BlockArgs = {
     | "cellranger"
     | "airr"
     | "airr-sc"
-    | "custom";
+    | "custom"
+    | "simple-paired";
   chains: string[];
   customMapping?: Record<string, string | undefined>;
   primaryCountType?: "read" | "umi";
@@ -65,6 +66,16 @@ export const model = BlockModel.create()
     if (!Array.isArray(chains) || chains.length === 0) return false;
 
     if (format === "custom") {
+      const m = customMapping ?? {};
+      const hasSeq = !!m["cdr3-nt"] || !!m["cdr3-aa"];
+      const hasV = !!m["v-gene"];
+      const hasJ = !!m["j-gene"];
+      const pct = primaryCountType ?? "read";
+      const hasPrimaryAbundance = pct === "umi" ? !!m["umi-count"] : !!m["read-count"];
+      return hasSeq && hasV && hasJ && hasPrimaryAbundance;
+    }
+
+    if (format === "simple-paired") {
       const m = customMapping ?? {};
       const hasSeq = !!m["cdr3-nt"] || !!m["cdr3-aa"];
       const hasV = !!m["v-gene"];

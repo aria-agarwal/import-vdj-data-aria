@@ -106,6 +106,19 @@ specs := {
 			return custom.getColumns(header, customMapping, primaryCountType)
 		}
 	},
+	"simple-paired": {
+		id: "simple-paired",
+		label: "Simple paired",
+		isSingleCell: false,
+		importTplId: ":import-simple-paired",
+		infer: func(header, opts) {
+			// opts.customMapping and opts.primaryCountType are required once mapping is complete;
+			// infer-columns.tpl already gates incomplete mapping by returning headerColumns.
+			customMapping := is_undefined(opts) ? undefined : opts.customMapping
+			primaryCountType := is_undefined(opts) ? undefined : opts.primaryCountType
+			return custom.getColumns(header, customMapping, primaryCountType)
+		}
+	},
 	"airr": {
 		id: "airr",
 		label: "AIRR",
