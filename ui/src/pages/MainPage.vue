@@ -129,6 +129,12 @@ const requiredCanonicalBase = [
   { key: "j-gene", label: "J gene" },
 ];
 
+const requiredSimplePaired = [
+  { key: "name", label: "Name" },
+  { key: "sequence", label: "Sequence" },
+  { key: "chain", label: "Chain" },
+];
+
 const optionalSequence = [
   { key: "fr1-aa", label: "FR1 aa" },
   { key: "fr2-aa", label: "FR2 aa" },
@@ -194,10 +200,16 @@ function setMapping(key: string, value: string | undefined) {
 
 const mappingComplete = computed(() => {
   const a = app.model.args as {
+    format?: string;
     customMapping?: Record<string, string | undefined>;
     primaryCountType?: "read" | "umi";
   };
   const m = a.customMapping ?? {};
+
+  if (a.format === "simple-paired") {
+    return !!m["name"] && !!m["sequence"] && !!m["chain"];
+  }
+
   const hasAA = !!m["cdr3-aa"];
   const hasNT = !!m["cdr3-nt"];
   const hasV = !!m["v-gene"];
@@ -248,7 +260,7 @@ const validationMessage = computed(() => {
 watch(
   () => app.model.args,
   (args) => {
-    if (args.format === "custom") {
+    if (args.format === "custom" || args.format === "simple-paired") {
       const a = app.model.args as unknown as {
         customMapping?: Record<string, string>;
         primaryCountType?: "read" | "umi";
@@ -310,12 +322,16 @@ watch(
 );
 
 const forceSettingsOpen = computed(() => {
-  const mustStayOpen = app.model.args.format === "custom" && !mappingComplete.value;
+  const isMappingFormat =
+    app.model.args.format === "custom" || app.model.args.format === "simple-paired";
+  const mustStayOpen = isMappingFormat && !mappingComplete.value;
   return app.model.ui.settingsOpen || mustStayOpen;
 });
 
 function onModalUpdate(val: boolean) {
-  const mustStayOpen = app.model.args.format === "custom" && !mappingComplete.value;
+  const isMappingFormat =
+    app.model.args.format === "custom" || app.model.args.format === "simple-paired";
+  const mustStayOpen = isMappingFormat && !mappingComplete.value;
   if (mustStayOpen) {
     app.model.ui.settingsOpen = true;
     return;
@@ -392,6 +408,24 @@ function onModalUpdate(val: boolean) {
         required
       />
       <!-- receptor selector for single-cell formats can be added here if needed -->
+
+      <template v-if="app.model.args.format === 'simple-paired'">
+        <PlSectionSeparator>Required columns</PlSectionSeparator>
+        <div class="field-col">
+          <PlDropdown
+            v-for="f in requiredSimplePaired"
+            :key="f.key"
+            :model-value="getMapping(f.key)"
+            :options="headerOptions"
+            :label="f.label"
+            clearable
+            required
+            @update:model-value="
+              (v: string | undefined) => setMapping(f.key, v as string | undefined)
+            "
+          />
+        </div>
+      </template>
 
       <template v-if="app.model.args.format === 'custom'">
         <PlSectionSeparator>Required columns — Aria's Columns</PlSectionSeparator>
