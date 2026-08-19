@@ -162,7 +162,7 @@ specs := {
 list := func() {
 	out := []
 	// Stable order for UI
-	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom"] {
+	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom", "simple-paired"] {
 		s := specs[id]
 		out = append(out, { id: s.id, label: s.label, isSingleCell: s.isSingleCell })
 	}

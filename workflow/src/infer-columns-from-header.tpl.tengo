@@ -37,7 +37,7 @@ self.body(func(inputs) {
         return {
             columnsInfo: airrImport.getColumns(header)
         }
-    } else if format == "custom" {
+    } else if format == "custom" || format == "simple-paired" {
         // For custom format, downstream step will build columnsInfo from user mapping
         return {
             columnsInfo: customImport.getColumns(header, customMapping, primaryCountType)
