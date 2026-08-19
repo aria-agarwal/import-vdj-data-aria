@@ -77,12 +77,10 @@ export const model = BlockModel.create()
 
     if (format === "simple-paired") {
       const m = customMapping ?? {};
-      const hasSeq = !!m["cdr3-nt"] || !!m["cdr3-aa"];
-      const hasV = !!m["v-gene"];
-      const hasJ = !!m["j-gene"];
-      const pct = primaryCountType ?? "read";
-      const hasPrimaryAbundance = pct === "umi" ? !!m["umi-count"] : !!m["read-count"];
-      return hasSeq && hasV && hasJ && hasPrimaryAbundance;
+      const hasName = !!m["name"];
+      const hasSequence = !!m["sequence"];
+      const hasChain = !!m["chain"];
+      return hasName && hasSequence && hasChain;
     }
 
     if (format === "qiagen") {
