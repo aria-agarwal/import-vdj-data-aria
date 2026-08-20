@@ -227,6 +227,11 @@ getColumns := func(header, customMapping) {
         propertyColumnSpecs["sequence"].spec.annotations["pl7.app/vdj/isAssemblingFeature"] = "true"
     }
 
+    keyColumns := []
+    keyStructure := ""
+    keyColumns = append(keyColumns, "sequence")
+    keyStructure = "VDJRegion"
+
     // Add property columns from existing columns.
     propertyColumns := []
     for key in maps.getKeys(columnMapping) {
@@ -238,7 +243,9 @@ getColumns := func(header, customMapping) {
 
     return {
         propertyColumns: propertyColumns,
-        columnMapping: columnMapping
+        columnMapping: columnMapping,
+        clonotypeKeyStructure: keyStructure,
+        clonotypeKeyColumns: keyColumns
     }
 }
 
