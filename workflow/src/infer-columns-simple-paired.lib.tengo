@@ -241,11 +241,20 @@ getColumns := func(header, customMapping) {
         }
     }    
 
+    // Build abundance columns (synthetic read-count = 1 per row)
+    readCountSpec := maps.deepMerge(common.readColumnSpecs["read-count"], {})
+    readFractionSpec := maps.deepMerge(common.readColumnSpecs["read-fraction"], {})
+    readCountSpec.spec.annotations["pl7.app/abundance/isPrimary"] = "true"
+    readCountSpec.spec.annotations["pl7.app/isAnchor"] = "true"
+    readFractionSpec.spec.annotations["pl7.app/abundance/isPrimary"] = "true"
+
     return {
         propertyColumns: propertyColumns,
         columnMapping: columnMapping,
         clonotypeKeyStructure: keyStructure,
-        clonotypeKeyColumns: keyColumns
+        clonotypeKeyColumns: keyColumns,
+        abundanceColumns: [readCountSpec, readFractionSpec],
+        hasUMIs: false
     }
 }
 

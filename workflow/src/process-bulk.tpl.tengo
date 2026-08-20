@@ -101,7 +101,8 @@ self.body(func(inputs) {
 		":import-common": assets.importTemplate(":import-common"),
 		":import-immunoSeq": assets.importTemplate(":import-immunoSeq"),
 		":import-qiagen": assets.importTemplate(":import-qiagen"),
-		":import-custom": assets.importTemplate(":import-custom")
+		":import-custom": assets.importTemplate(":import-custom"),
+		":import-simple-paired": assets.importTemplate(":import-simple-paired")
 	}
 	importTpl := importTemplates[formatSpec.importTplId]
 	if importTpl == undefined {
@@ -186,8 +187,10 @@ self.body(func(inputs) {
                 traceSteps: traceSteps,
                 name: "stats-" + chain,
                 path: ["stats", chain]
-            },
-            {
+            }
+        ]
+        if !is_undefined(columnsInfo.abundanceColumns) && len(columnsInfo.abundanceColumns) > 0 {
+            importOutputs += [{
                 type: "Xsv",
                 xsvType: "tsv",
                 settings: {
@@ -202,7 +205,8 @@ self.body(func(inputs) {
                 cpu: 2,
                 name: "abundance-" + chain,
                 path: ["tsv", chain]
-        }]
+            }]
+        }
     }
 
 	importResults := pframes.processColumn(
@@ -236,7 +240,9 @@ self.body(func(inputs) {
 	)
 
     for chain in chains {
-        importResults.addXsvOutputToBuilder(result, "abundance-" + chain, "abundance-" + chain)
+        if !is_undefined(columnsInfo.abundanceColumns) && len(columnsInfo.abundanceColumns) > 0 {
+            importResults.addXsvOutputToBuilder(result, "abundance-" + chain, "abundance-" + chain)
+        }
         importResults.addXsvOutputToBuilder(stats, "stats-" + chain, "stats-" + chain)
     }
 
