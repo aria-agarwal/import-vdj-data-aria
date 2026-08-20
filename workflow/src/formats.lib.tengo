@@ -7,6 +7,7 @@ qiagen := import(":infer-columns-qiagen")
 immunoSeq := import(":infer-columns-immunoSeq")
 custom := import(":infer-columns-custom")
 airr := import(":infer-columns-airr")
+simplePaired := import(":infer-columns-simple-paired")
 
 // NOTE: `infer` functions here accept (header, opts) and return columnsInfo
 // opts may contain:
@@ -112,11 +113,8 @@ specs := {
 		isSingleCell: false,
 		importTplId: ":import-simple-paired",
 		infer: func(header, opts) {
-			// opts.customMapping and opts.primaryCountType are required once mapping is complete;
-			// infer-columns.tpl already gates incomplete mapping by returning headerColumns.
 			customMapping := is_undefined(opts) ? undefined : opts.customMapping
-			primaryCountType := is_undefined(opts) ? undefined : opts.primaryCountType
-			return custom.getColumns(header, customMapping, primaryCountType)
+			return simplePaired.getColumns(header, customMapping)
 		}
 	},
 	"airr": {

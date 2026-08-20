@@ -8,6 +8,7 @@ mixcrImport := import(":infer-columns-mixcr")
 cellrangerImport := import(":infer-columns-cellranger")
 airrImport := import(":infer-columns-airr")
 customImport := import(":infer-columns-custom")
+simplePairedImport := import(":infer-columns-simple-paired")
 
 self.defineOutputs("columnsInfo")
 
@@ -37,10 +38,15 @@ self.body(func(inputs) {
         return {
             columnsInfo: airrImport.getColumns(header)
         }
-    } else if format == "custom" || format == "simple-paired" {
+    } else if format == "custom" {
         // For custom format, downstream step will build columnsInfo from user mapping
         return {
             columnsInfo: customImport.getColumns(header, customMapping, primaryCountType)
+        }
+    } else if format == "simple-paired" {
+        // For custom format, downstream step will build columnsInfo from user mapping
+        return {
+            columnsInfo: simplePairedImport.getColumns(header, customMapping)
         }
     } else {
         ll.panic("Unsupported format: " + format)
