@@ -219,10 +219,12 @@ getColumns := func(header, customMapping) {
         if is_undefined(baseSpec) { continue }
         visibility := !is_undefined(visibleCols[col]) ? "default" : "hidden"
         baseLabel := baseSpec.spec.annotations["pl7.app/label"]
+        baseDomain := is_undefined(baseSpec.spec.domain) ? {} : baseSpec.spec.domain
         heavySpec := maps.deepMerge(baseSpec, {
             id: col + "_heavy",
             column: col + "_heavy",
             spec: {
+                domain: maps.merge(baseDomain, { "pl7.app/vdj/pairedRole": "heavy" }),
                 annotations: maps.merge(baseSpec.spec.annotations, {
                     "pl7.app/label": baseLabel + " (Heavy)",
                     "pl7.app/table/visibility": visibility
@@ -233,6 +235,7 @@ getColumns := func(header, customMapping) {
             id: col + "_light",
             column: col + "_light",
             spec: {
+                domain: maps.merge(baseDomain, { "pl7.app/vdj/pairedRole": "light" }),
                 annotations: maps.merge(baseSpec.spec.annotations, {
                     "pl7.app/label": baseLabel + " (Light)",
                     "pl7.app/table/visibility": visibility
