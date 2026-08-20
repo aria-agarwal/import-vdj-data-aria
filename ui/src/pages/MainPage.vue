@@ -135,6 +135,16 @@ const requiredSimplePaired = [
   { key: "chain", label: "Chain" },
 ];
 
+const optionalSimplePaired = [
+  { key: "fr1-aa", label: "FR1 aa" },
+  { key: "fr2-aa", label: "FR2 aa" },
+  { key: "fr3-aa", label: "FR3 aa" },
+  { key: "fr4-aa", label: "FR4 aa" },
+  { key: "cdr1-aa", label: "CDR1 aa" },
+  { key: "cdr2-aa", label: "CDR2 aa" },
+  { key: "cdr3-aa", label: "CDR3 aa" },
+];
+
 const optionalSequence = [
   { key: "fr1-aa", label: "FR1 aa" },
   { key: "fr2-aa", label: "FR2 aa" },
@@ -425,6 +435,22 @@ function onModalUpdate(val: boolean) {
             "
           />
         </div>
+        <PlSectionSeparator>Optional columns</PlSectionSeparator>
+        <PlAccordion>
+          <PlAccordionSection label="Sequence segments">
+            <div class="field-col">
+              <PlDropdown
+                v-for="f in optionalSimplePaired"
+                :key="f.key"
+                :model-value="getMapping(f.key)"
+                :options="headerOptions"
+                :label="f.label"
+                clearable
+                @update:model-value="(v: string | undefined) => setMapping(f.key, v)"
+              />
+            </div>
+          </PlAccordionSection>
+        </PlAccordion>
       </template>
 
       <template v-if="app.model.args.format === 'custom'">
