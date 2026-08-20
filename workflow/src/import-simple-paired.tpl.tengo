@@ -51,71 +51,70 @@ self.body(func(inputs) {
 		df = df.withColumns(renameExpressions...)
 	}
 
-	// Clonotype key is the 'name' column (pairs heavy + light chains by shared name)
-	df = df.withColumns(pt.col("name").alias("clonotypeKey"))
+	// Split into heavy and light subsets
+	heavyDf := df.filter(pt.col("chain").strSlice(0, 3).eq("IGH"))
+	lightDf := df.filter(
+		pt.col("chain").strSlice(0, 3).eq("IGL").or(pt.col("chain").strSlice(0, 3).eq("IGK"))
+	)
 
-	chainToLocusMap := {
-		"IGHeavy": ["IGH"],
-		"IGLight": ["IGL", "IGK"],
-		"TCRAlpha": ["TCRA", "TRAC", "TRA"],
-		"TCRBeta": ["TCRB", "TRBC", "TRB"],
-		"TCRGamma": ["TCRG", "TRGC", "TRG"],
-		"TCRDelta": ["TCRD", "TRDC", "TRD"]
+	// Collect non-name canonical columns that were actually mapped
+	nonNameCols := []
+	for col in maps.getKeys(columnsInfo.columnMapping) {
+		if col != "name" {
+			nonNameCols = append(nonNameCols, col)
+		}
 	}
 
-	for chain in chains {
-		prefixes := chainToLocusMap[chain]
-
-		chainDf := undefined
-		if chain == "IGLight" {
-			chainDf = df.filter(
-				pt.col("chain").strSlice(0, 3).eq("IGK").or(pt.col("chain").strSlice(0, 3).eq("IGL"))
-			)
-		} else {
-			filterExpr := undefined
-			for i := 0; i < len(prefixes); i++ {
-				prefix := prefixes[i]
-				expr := pt.col("chain").strSlice(0, len(prefix)).eq(prefix)
-				if i == 0 {
-					filterExpr = expr
-				} else {
-					filterExpr = filterExpr.or(expr)
-				}
-			}
-			chainDf = df.filter(filterExpr)
-		}
-
-		// Add synthetic read-count = 1 per row, then compute read-fraction
-		chainDf = chainDf.withColumns(pt.lit(1).cast("Int64").alias("read-count"))
-		chainDf = chainDf.withColumns(
-			pt.col("read-count").truediv(pt.col("read-count").sum()).fillNaN(0).alias("read-fraction")
-		)
-
-		// Keep clonotypeKey, property columns, and abundance columns
-		keepColumns := ["clonotypeKey", "read-count", "read-fraction"]
-		for col in columnsInfo.propertyColumns {
-			keepColumns = append(keepColumns, col.column)
-		}
-		chainDf = chainDf.select(keepColumns...)
-
-		chainDf.save(chain + ".tsv")
-
-		statsExprs := [pt.col("clonotypeKey").count().alias("clonotype-count")]
-		statsdf := chainDf.select(statsExprs...)
-		statsdf.saveContent("stats-" + chain + ".tsv")
+	// Rename each non-name column to col_heavy / col_light
+	heavyExprs := []
+	lightExprs := []
+	for col in nonNameCols {
+		heavyExprs = append(heavyExprs, pt.col(col).alias(col + "_heavy"))
+		lightExprs = append(lightExprs, pt.col(col).alias(col + "_light"))
 	}
+	if len(heavyExprs) > 0 {
+		heavyDf = heavyDf.withColumns(heavyExprs...)
+	}
+	if len(lightExprs) > 0 {
+		lightDf = lightDf.withColumns(lightExprs...)
+	}
+
+	// Keep only name + suffixed columns before joining
+	heavyKeepCols := ["name"]
+	lightKeepCols := ["name"]
+	for col in nonNameCols {
+		heavyKeepCols = append(heavyKeepCols, col + "_heavy")
+		lightKeepCols = append(lightKeepCols, col + "_light")
+	}
+	heavyDf = heavyDf.select(heavyKeepCols...)
+	lightDf = lightDf.select(lightKeepCols...)
+
+	// Inner join on name (1:1 assumption)
+	pairedDf := heavyDf.join(lightDf, { how: "inner", on: ["name"], coalesce: true })
+	pairedDf = pairedDf.withColumns(pt.col("name").alias("clonotypeKey"))
+
+	// Synthetic abundance
+	pairedDf = pairedDf.withColumns(pt.lit(1).cast("Int64").alias("read-count"))
+	pairedDf = pairedDf.withColumns(
+		pt.col("read-count").truediv(pt.col("read-count").sum()).fillNaN(0).alias("read-fraction")
+	)
+
+	// Final column selection
+	finalCols := ["clonotypeKey", "name", "read-count", "read-fraction"]
+	for col in nonNameCols {
+		finalCols = append(finalCols, col + "_heavy")
+		finalCols = append(finalCols, col + "_light")
+	}
+	pairedDf = pairedDf.select(finalCols...)
+
+	pairedDf.save("Paired.tsv")
+	statsdf := pairedDf.select([pt.col("clonotypeKey").count().alias("clonotype-count")]...)
+	statsdf.saveContent("stats-Paired.tsv")
 
 	wf = wf.run()
 
-	tsv := {}
-	stats := {}
-	for chain in chains {
-		tsv[chain] = wf.getFile(chain + ".tsv")
-		stats[chain] = wf.getFileContent("stats-" + chain + ".tsv")
-	}
-
 	return {
-		tsv: tsv,
-		stats: stats
+		tsv: { "Paired": wf.getFile("Paired.tsv") },
+		stats: { "Paired": wf.getFileContent("stats-Paired.tsv") }
 	}
 })

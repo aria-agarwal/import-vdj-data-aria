@@ -196,7 +196,6 @@ getColumns := func(header, customMapping) {
 			columnMapping[canonical] = source
 		}
 	}
-
     for canonical in optionalColumns {
 		source := customMapping[canonical]
 		if !is_undefined(source) && source != "" {
@@ -204,44 +203,47 @@ getColumns := func(header, customMapping) {
 		}
 	}
 
-    // Build arrays based on provided mapping
-    presentFrCdrAa := columnMapping["fr1-aa"] != undefined && 
-                        columnMapping["cdr1-aa"] != undefined && 
-                        columnMapping["fr2-aa"] != undefined && 
-                        columnMapping["cdr2-aa"] != undefined && 
-                        columnMapping["cdr3-aa"] != undefined && 
-                        columnMapping["fr3-aa"] != undefined
-
-    useFrCdr := presentFrCdrAa
-    hasVdjAa := columnMapping["sequence"] != undefined
-    hasFr4Nt := columnMapping["fr4-nt"] != undefined
-
-
-
-    // define mainSequence and assemblingFeature sequence columns
-    // Only the specs for which we have columns will be loaded
-    // @TODO: check this. For now we just set vdj as main if we have aa and nt
-    
-    if presentFrCdrAa {
-        propertyColumnSpecs["sequence"].spec.annotations["pl7.app/vdj/isMainSequence"] = "true"
-        propertyColumnSpecs["sequence"].spec.annotations["pl7.app/vdj/isAssemblingFeature"] = "true"
+    // 'name' is the join key / clonotypeKey — included as-is (not duplicated)
+    propertyColumns := []
+    if columnMapping["name"] != undefined {
+        propertyColumns = append(propertyColumns, propertyColumnSpecs["name"])
     }
 
-    keyColumns := []
-    keyStructure := ""
-    keyColumns = append(keyColumns, "sequence")
-    keyStructure = "VDJRegion"
+    // For every other mapped column, generate a _heavy and _light variant
+    // sequence and chain are visible; optional FR/CDR segments are hidden
+    visibleCols := {"sequence": true, "chain": true}
+    pairedCols := ["sequence", "chain", "fr1-aa", "fr2-aa", "fr3-aa", "fr4-aa", "cdr1-aa", "cdr2-aa", "cdr3-aa"]
+    for col in pairedCols {
+        if columnMapping[col] == undefined { continue }
+        baseSpec := propertyColumnSpecs[col]
+        if is_undefined(baseSpec) { continue }
+        visibility := !is_undefined(visibleCols[col]) ? "default" : "hidden"
+        baseLabel := baseSpec.spec.annotations["pl7.app/label"]
+        heavySpec := maps.deepMerge(baseSpec, {
+            id: col + "_heavy",
+            column: col + "_heavy",
+            spec: {
+                annotations: maps.merge(baseSpec.spec.annotations, {
+                    "pl7.app/label": baseLabel + " (Heavy)",
+                    "pl7.app/table/visibility": visibility
+                })
+            }
+        })
+        lightSpec := maps.deepMerge(baseSpec, {
+            id: col + "_light",
+            column: col + "_light",
+            spec: {
+                annotations: maps.merge(baseSpec.spec.annotations, {
+                    "pl7.app/label": baseLabel + " (Light)",
+                    "pl7.app/table/visibility": visibility
+                })
+            }
+        })
+        propertyColumns = append(propertyColumns, heavySpec)
+        propertyColumns = append(propertyColumns, lightSpec)
+    }
 
-    // Add property columns from existing columns.
-    propertyColumns := []
-    for key in maps.getKeys(columnMapping) {
-        spec := propertyColumnSpecs[key]
-        if !is_undefined(spec) {
-            propertyColumns = append(propertyColumns, spec)
-        }
-    }    
-
-    // Build abundance columns (synthetic read-count = 1 per row)
+    // Abundance: synthetic read-count = 1 per pair
     readCountSpec := maps.deepMerge(common.readColumnSpecs["read-count"], {})
     readFractionSpec := maps.deepMerge(common.readColumnSpecs["read-fraction"], {})
     readCountSpec.spec.annotations["pl7.app/abundance/isPrimary"] = "true"
@@ -251,8 +253,8 @@ getColumns := func(header, customMapping) {
     return {
         propertyColumns: propertyColumns,
         columnMapping: columnMapping,
-        clonotypeKeyStructure: keyStructure,
-        clonotypeKeyColumns: keyColumns,
+        clonotypeKeyStructure: "PairedName",
+        clonotypeKeyColumns: ["name"],
         abundanceColumns: [readCountSpec, readFractionSpec],
         hasUMIs: false
     }

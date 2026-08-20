@@ -24,6 +24,11 @@ wf.body(func(args) {
 		chains = ["IGHeavy", "IGLight", "TCRAlpha", "TCRBeta", "TCRDelta", "TCRGamma"]
 	}
 
+	// simple-paired always produces a single joined output, not per-chain outputs
+	if format == "simple-paired" {
+		chains = ["Paired"]
+	}
+
 	columnsInfo := render.create(inferColumnsTpl, {
 		format: format,
 		dataset: dataset,
