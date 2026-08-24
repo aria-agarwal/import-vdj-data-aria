@@ -210,14 +210,15 @@ getColumns := func(header, customMapping) {
     }
 
     // For every other mapped column, generate a _heavy and _light variant
-    // sequence and chain are visible; optional FR/CDR segments are hidden
-    visibleCols := {"sequence": true, "chain": true}
+    // sequence and chain are default visible; FR/CDR optional; all hidden cols shown if mapped
+    defaultCols := {"sequence": true, "chain": true}
+    optionalCols := {"fr1-aa": true, "fr2-aa": true, "fr3-aa": true, "fr4-aa": true, "cdr1-aa": true, "cdr2-aa": true, "cdr3-aa": true}
     pairedCols := ["sequence", "chain", "fr1-aa", "fr2-aa", "fr3-aa", "fr4-aa", "cdr1-aa", "cdr2-aa", "cdr3-aa"]
     for col in pairedCols {
         if columnMapping[col] == undefined { continue }
         baseSpec := propertyColumnSpecs[col]
         if is_undefined(baseSpec) { continue }
-        visibility := !is_undefined(visibleCols[col]) ? "default" : "hidden"
+        visibility := !is_undefined(defaultCols[col]) ? "default" : !is_undefined(optionalCols[col]) ? "optional" : "hidden"
         baseLabel := baseSpec.spec.annotations["pl7.app/label"]
         baseDomain := is_undefined(baseSpec.spec.domain) ? {} : baseSpec.spec.domain
         heavySpec := maps.deepMerge(baseSpec, {
@@ -246,12 +247,14 @@ getColumns := func(header, customMapping) {
         propertyColumns = append(propertyColumns, lightSpec)
     }
 
-    // Abundance: synthetic read-count = 1 per pair
+    // Abundance: synthetic read-count = 1 per pair — hidden from table
     readCountSpec := maps.deepMerge(common.readColumnSpecs["read-count"], {})
     readFractionSpec := maps.deepMerge(common.readColumnSpecs["read-fraction"], {})
     readCountSpec.spec.annotations["pl7.app/abundance/isPrimary"] = "true"
     readCountSpec.spec.annotations["pl7.app/isAnchor"] = "true"
+    readCountSpec.spec.annotations["pl7.app/table/visibility"] = "hidden"
     readFractionSpec.spec.annotations["pl7.app/abundance/isPrimary"] = "true"
+    readFractionSpec.spec.annotations["pl7.app/table/visibility"] = "hidden"
 
     return {
         propertyColumns: propertyColumns,
