@@ -39,6 +39,7 @@ propertyColumnSpecs := {
 			},
 			annotations: a(46865, false, {
 				"pl7.app/label": "Full AA",
+				"pl7.app/vdj/isAssemblingFeature": "true",
 				"pl7.app/table/fontFamily": "monospace",
                 "pl7.app/table/visibility": "default"
 			})
