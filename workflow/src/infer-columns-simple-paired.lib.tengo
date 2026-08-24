@@ -35,7 +35,7 @@ propertyColumnSpecs := {
 			valueType: "String",
 			domain: {
 				"pl7.app/alphabet": "aminoacid",
-				"pl7.app/vdj/feature": "FullLength"
+				"pl7.app/vdj/feature": "VDJRegion"
 			},
 			annotations: a(46865, false, {
 				"pl7.app/label": "Full AA",
