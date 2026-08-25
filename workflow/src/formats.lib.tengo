@@ -8,6 +8,7 @@ immunoSeq := import(":infer-columns-immunoSeq")
 custom := import(":infer-columns-custom")
 airr := import(":infer-columns-airr")
 simplePaired := import(":infer-columns-simple-paired")
+prePaired := import(":infer-columns-simple-paired")
 
 // NOTE: `infer` functions here accept (header, opts) and return columnsInfo
 // opts may contain:
@@ -117,6 +118,16 @@ specs := {
 			return simplePaired.getColumns(header, customMapping)
 		}
 	},
+	"pre-paired": {
+		id: "pre-paired",
+		label: "Pre paired",
+		isSingleCell: false,
+		importTplId: ":import-simple-paired",
+		infer: func(header, opts) {
+			customMapping := is_undefined(opts) ? undefined : opts.customMapping
+			return simplePaired.getColumns(header, customMapping)
+		}
+	},
 	"airr": {
 		id: "airr",
 		label: "AIRR",
@@ -160,7 +171,7 @@ specs := {
 list := func() {
 	out := []
 	// Stable order for UI
-	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom", "simple-paired"] {
+	for id in ["immunoSeq", "qiagen", "mixcr", "mixcr-sc", "cellranger", "airr", "airr-sc", "custom", "simple-paired", "pre-paired"] {
 		s := specs[id]
 		out = append(out, { id: s.id, label: s.label, isSingleCell: s.isSingleCell })
 	}

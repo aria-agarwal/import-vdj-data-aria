@@ -19,7 +19,8 @@ export type BlockArgs = {
     | "airr"
     | "airr-sc"
     | "custom"
-    | "simple-paired";
+    | "simple-paired"
+    | "pre-paired";
   chains: string[];
   customMapping?: Record<string, string | undefined>;
   primaryCountType?: "read" | "umi";
@@ -81,6 +82,14 @@ export const model = BlockModel.create()
       const hasSequence = !!m["sequence"];
       const hasChain = !!m["chain"];
       return hasName && hasSequence && hasChain;
+    }
+
+    if (format === "pre-paired") {
+      const m = customMapping ?? {};
+      const hasName = !!m["name"];
+      const hasHeavy = !!m["heavy_sequence"];
+      const hasLight = !!m["light_sequence"];
+      return hasName && hasHeavy && hasLight;
     }
 
     if (format === "qiagen") {

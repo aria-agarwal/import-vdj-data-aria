@@ -32,6 +32,7 @@ const formatOptions = [
   { label: "AIRR single cell", value: "airr-sc" },
   { label: "Custom", value: "custom" },
   { label: "Simple paired", value: "simple-paired" },
+  { label: "Pre paired", value: "pre-paired" },
 ];
 
 const chainsOptions = [
@@ -145,6 +146,22 @@ const optionalSimplePaired = [
   { key: "cdr3-aa", label: "CDR3 aa" },
 ];
 
+const requiredPrePaired = [
+  { key: "name", label: "Name" },
+  { key: "heavy_sequence", label: "Heavy Full Length Sequence" },
+  { key: "light_sequence", label: "Light Full Length Sequence" },
+];
+
+const optionalPrePaired = [
+  { key: "fr1-aa", label: "FR1 aa" },
+  { key: "fr2-aa", label: "FR2 aa" },
+  { key: "fr3-aa", label: "FR3 aa" },
+  { key: "fr4-aa", label: "FR4 aa" },
+  { key: "cdr1-aa", label: "CDR1 aa" },
+  { key: "cdr2-aa", label: "CDR2 aa" },
+  { key: "cdr3-aa", label: "CDR3 aa" },
+];
+
 const optionalSequence = [
   { key: "fr1-aa", label: "FR1 aa" },
   { key: "fr2-aa", label: "FR2 aa" },
@@ -220,6 +237,10 @@ const mappingComplete = computed(() => {
     return !!m["name"] && !!m["sequence"] && !!m["chain"];
   }
 
+  if (a.format === "pre-paired") {
+    return !!m["name"] && !!m["heavy_sequence"] && !!m["light_sequence"];
+  }
+
   const hasAA = !!m["cdr3-aa"];
   const hasNT = !!m["cdr3-nt"];
   const hasV = !!m["v-gene"];
@@ -270,7 +291,11 @@ const validationMessage = computed(() => {
 watch(
   () => app.model.args,
   (args) => {
-    if (args.format === "custom" || args.format === "simple-paired") {
+    if (
+      args.format === "custom" ||
+      args.format === "simple-paired" ||
+      args.format === "pre-paired"
+    ) {
       const a = app.model.args as unknown as {
         customMapping?: Record<string, string>;
         primaryCountType?: "read" | "umi";
@@ -333,14 +358,18 @@ watch(
 
 const forceSettingsOpen = computed(() => {
   const isMappingFormat =
-    app.model.args.format === "custom" || app.model.args.format === "simple-paired";
+    app.model.args.format === "custom" ||
+    app.model.args.format === "simple-paired" ||
+    app.model.args.format === "pre-paired";
   const mustStayOpen = isMappingFormat && !mappingComplete.value;
   return app.model.ui.settingsOpen || mustStayOpen;
 });
 
 function onModalUpdate(val: boolean) {
   const isMappingFormat =
-    app.model.args.format === "custom" || app.model.args.format === "simple-paired";
+    app.model.args.format === "custom" ||
+    app.model.args.format === "simple-paired" ||
+    app.model.args.format === "pre-paired";
   const mustStayOpen = isMappingFormat && !mappingComplete.value;
   if (mustStayOpen) {
     app.model.ui.settingsOpen = true;
@@ -441,6 +470,40 @@ function onModalUpdate(val: boolean) {
             <div class="field-col">
               <PlDropdown
                 v-for="f in optionalSimplePaired"
+                :key="f.key"
+                :model-value="getMapping(f.key)"
+                :options="headerOptions"
+                :label="f.label"
+                clearable
+                @update:model-value="(v: string | undefined) => setMapping(f.key, v)"
+              />
+            </div>
+          </PlAccordionSection>
+        </PlAccordion>
+      </template>
+
+      <template v-if="app.model.args.format === 'pre-paired'">
+        <PlSectionSeparator>Required columns</PlSectionSeparator>
+        <div class="field-col">
+          <PlDropdown
+            v-for="f in requiredPrePaired"
+            :key="f.key"
+            :model-value="getMapping(f.key)"
+            :options="headerOptions"
+            :label="f.label"
+            clearable
+            required
+            @update:model-value="
+              (v: string | undefined) => setMapping(f.key, v as string | undefined)
+            "
+          />
+        </div>
+        <PlSectionSeparator>Optional columns</PlSectionSeparator>
+        <PlAccordion>
+          <PlAccordionSection label="Sequence segments">
+            <div class="field-col">
+              <PlDropdown
+                v-for="f in optionalPrePaired"
                 :key="f.key"
                 :model-value="getMapping(f.key)"
                 :options="headerOptions"
