@@ -9,6 +9,7 @@ cellrangerImport := import(":infer-columns-cellranger")
 airrImport := import(":infer-columns-airr")
 customImport := import(":infer-columns-custom")
 simplePairedImport := import(":infer-columns-simple-paired")
+prePairedImport := import(":infer-columns-pre-paired")
 
 self.defineOutputs("columnsInfo")
 
@@ -47,6 +48,11 @@ self.body(func(inputs) {
         // For custom format, downstream step will build columnsInfo from user mapping
         return {
             columnsInfo: simplePairedImport.getColumns(header, customMapping)
+        }
+    } else if format == "pre-paired" {
+        // For custom format, downstream step will build columnsInfo from user mapping
+        return {
+            columnsInfo: prePairedImport.getColumns(header, customMapping)
         }
     } else {
         ll.panic("Unsupported format: " + format)
