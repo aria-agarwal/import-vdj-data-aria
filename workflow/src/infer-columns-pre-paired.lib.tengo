@@ -39,7 +39,7 @@ propertyColumnSpecs := {
 				"pl7.app/vdj/pairedRole": "heavy"
 			},
 			annotations: a(46865, false, {
-				"pl7.app/label": "Full AA",
+				"pl7.app/label": "Full AA (Heavy)",
 				"pl7.app/vdj/isAssemblingFeature": "true",
 				"pl7.app/table/fontFamily": "monospace",
                 "pl7.app/table/visibility": "default"
@@ -59,7 +59,7 @@ propertyColumnSpecs := {
 				"pl7.app/vdj/pairedRole": "light"
 			},
 			annotations: a(46865, false, {
-				"pl7.app/label": "Full AA",
+				"pl7.app/label": "Full AA (Light)",
 				"pl7.app/vdj/isAssemblingFeature": "true",
 				"pl7.app/table/fontFamily": "monospace",
                 "pl7.app/table/visibility": "default"
@@ -241,7 +241,7 @@ getColumns := func(header, customMapping) {
                 domain: maps.merge(baseDomain, { "pl7.app/vdj/pairedRole": "heavy" }),
                 annotations: maps.merge(baseSpec.spec.annotations, {
                     "pl7.app/label": baseLabel + " (Heavy)",
-                    "pl7.app/table/visibility": "optional"
+                    "pl7.app/table/visibility": "default"
                 })
             }
         })
@@ -252,7 +252,7 @@ getColumns := func(header, customMapping) {
                 domain: maps.merge(baseDomain, { "pl7.app/vdj/pairedRole": "light" }),
                 annotations: maps.merge(baseSpec.spec.annotations, {
                     "pl7.app/label": baseLabel + " (Light)",
-                    "pl7.app/table/visibility": "optional"
+                    "pl7.app/table/visibility": "default"
                 })
             }
         })
