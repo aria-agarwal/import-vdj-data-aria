@@ -25,7 +25,7 @@ wf.body(func(args) {
 	}
 
 	// simple-paired always produces a single joined output, not per-chain outputs
-	if format == "simple-paired" {
+	if format == "simple-paired" || format == "pre-paired"{
 		chains = ["Paired"]
 	}
 
