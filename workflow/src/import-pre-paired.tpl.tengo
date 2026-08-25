@@ -1,0 +1,99 @@
+ll := import("@platforma-sdk/workflow-tengo:ll")
+self := import("@platforma-sdk/workflow-tengo:tpl.light")
+pConstants := import("@platforma-sdk/workflow-tengo:pframes.constants")
+slices := import("@platforma-sdk/workflow-tengo:slices")
+maps := import("@platforma-sdk/workflow-tengo:maps")
+pt := import("@platforma-sdk/workflow-tengo:pt")
+
+self.defineOutputs("tsv", "stats")
+
+self.body(func(inputs) {
+	inputFiles := inputs[pConstants.VALUE_FIELD_NAME]
+	columnsInfo := inputs.columnsInfo
+	chains := inputs.chains
+	config := inputs.config
+	xsvType := "tsv"
+	if !is_undefined(config) && !is_undefined(config.xsvType) { xsvType = config.xsvType }
+
+	wf := pt.workflow().mem("8GiB").cpu(4)
+
+	dataFrames := []
+	inputMap := inputFiles.inputs()
+	for key in maps.getKeys(inputMap) {
+		file := inputMap[key]
+		dataFrames = append(dataFrames, wf.frame(file, {
+			xsvType: xsvType,
+			id: "table_" + key,
+			inferSchema: false
+		}))
+	}
+
+	if len(dataFrames) == 0 {
+		ll.panic("no input files found")
+	}
+
+	df := undefined
+	if len(dataFrames) > 1 {
+		df = pt.concat(dataFrames)
+	} else {
+		df = dataFrames[0]
+	}
+
+	// Rename original columns to canonical IDs.
+	renameExpressions := []
+	for canonical in maps.getKeys(columnsInfo.columnMapping) {
+		original := columnsInfo.columnMapping[canonical]
+		if original != undefined && canonical != original {
+			renameExpressions = append(renameExpressions, pt.col(original).alias(canonical))
+		}
+	}
+	if len(renameExpressions) > 0 {
+		df = df.withColumns(renameExpressions...)
+	}
+
+	// Collect non-name, non-sequence canonical columns that were actually mapped (these get _heavy/_light)
+	optionalCols := []
+	for col in maps.getKeys(columnsInfo.columnMapping) {
+		if col != "name" && col != "heavy_sequence" && col != "light_sequence" {
+			optionalCols = append(optionalCols, col)
+		}
+	}
+
+	// Rename each optional column to col_heavy / col_light
+	optionalExprs := []
+	for col in optionalCols {
+		optionalExprs = append(optionalExprs, pt.col(col).alias(col + "_heavy"))
+		optionalExprs = append(optionalExprs, pt.col(col).alias(col + "_light"))
+	}
+	if len(optionalExprs) > 0 {
+		df = df.withColumns(optionalExprs...)
+	}
+
+	pairedDf := df
+	pairedDf = pairedDf.withColumns(pt.col("name").alias("clonotypeKey"))
+
+	// Synthetic abundance
+	pairedDf = pairedDf.withColumns(pt.lit(1).cast("Int64").alias("read-count"))
+	pairedDf = pairedDf.withColumns(
+		pt.col("read-count").truediv(pt.col("read-count").sum()).fillNaN(0).alias("read-fraction")
+	)
+
+	// Final column selection: name, heavy_sequence, light_sequence, clonotypeKey, abundance, optional variants
+	finalCols := ["clonotypeKey", "name", "heavy_sequence", "light_sequence", "read-count", "read-fraction"]
+	for col in optionalCols {
+		finalCols = append(finalCols, col + "_heavy")
+		finalCols = append(finalCols, col + "_light")
+	}
+	pairedDf = pairedDf.select(finalCols...)
+
+	pairedDf.save("Paired.tsv")
+	statsdf := pairedDf.select([pt.col("clonotypeKey").count().alias("clonotype-count")]...)
+	statsdf.saveContent("stats-Paired.tsv")
+
+	wf = wf.run()
+
+	return {
+		tsv: { "Paired": wf.getFile("Paired.tsv") },
+		stats: { "Paired": wf.getFileContent("stats-Paired.tsv") }
+	}
+})
