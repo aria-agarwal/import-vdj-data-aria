@@ -8,7 +8,7 @@ immunoSeq := import(":infer-columns-immunoSeq")
 custom := import(":infer-columns-custom")
 airr := import(":infer-columns-airr")
 simplePaired := import(":infer-columns-simple-paired")
-prePaired := import(":infer-columns-simple-paired")
+prePaired := import(":infer-columns-pre-paired")
 
 // NOTE: `infer` functions here accept (header, opts) and return columnsInfo
 // opts may contain:
@@ -122,10 +122,10 @@ specs := {
 		id: "pre-paired",
 		label: "Pre paired",
 		isSingleCell: false,
-		importTplId: ":import-simple-paired",
+		importTplId: ":import-pre-paired",
 		infer: func(header, opts) {
 			customMapping := is_undefined(opts) ? undefined : opts.customMapping
-			return simplePaired.getColumns(header, customMapping)
+			return prePaired.getColumns(header, customMapping)
 		}
 	},
 	"airr": {
