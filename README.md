@@ -2,6 +2,7 @@
 This block aims to normalize the data into standard clonotype datasets that downstream Platforma blocks can use. 
 
 **Goal**: This block addresses two gaps in importing full length paired sequences into a usable format for downstream analysis.
+
       1. Importing full length sequences and pairing heavy/light chains by cell barcode/name. This fix will enable users to input a list
       of full length amino acid sequences, along with cell barcode/name and chain information, and reconstruct correct pairing. 
       2. Importing pre-paired full length amino acid sequences. This fix will support an alternate workflow where the data has already
