@@ -9,3 +9,15 @@ This block aims to normalize the data into standard clonotype datasets that down
       been paired by an upstream tool, and import the data as is. 
 
 **Key Changes Made:**
+      **1. Simple Paired Format**
+            1. Created new file called infer-columns-simple-paired.lib.tengo. This file defines the column spec definitions, 
+            including mapping user columns to canonical columns Platforma is able to recognize, creating _heavy and _light specs.
+            This file also defines synthetic abundance columns such as read_count. 
+            2. Created new file called import-simple-paired.tpl.tengo which contains the bulk of the import and join logic. 
+            This file renames the user defined columns to canonical names, splits the input data into two data frames heavyDf(IGH) 
+            and lightDf (IGL/IGK), and adds suffixes to the remaining column names to distinguish them for heavy and light data. 
+            It then performs an inner join on the name column, assuming a 1:1 ratio of unique heavy to light sequences. This file 
+            also contains logic to create a synthetic read_count and read_fraction to enable use of the process-bulk.tpl.tengo file. 
+            3. Edited the process-bulk-tpl.tengo file to register the simple-paired import template, made abundance output optional, and 
+            runs the import and clonotype files. 
+      **2. Pre-Paired Format**
