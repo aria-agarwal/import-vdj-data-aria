@@ -24,6 +24,7 @@ This block aims to normalize the data into standard clonotype datasets that down
       runs the import and clonotype files. 
             
 **2. Pre-Paired Format**
+
       1. Created a new file called infer-columns-pre-paired.lib.tengo which defines column specs, including columns for heavy
       and light sequences which have pairedRole defined in domain. This file also maps user columns to canonical columns that 
       Platforma is able to recognize. Also creates synthetic read counts which are hidden from resulting table. 
