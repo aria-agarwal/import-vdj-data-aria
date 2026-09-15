@@ -4,6 +4,7 @@ pConstants := import("@platforma-sdk/workflow-tengo:pframes.constants")
 slices := import("@platforma-sdk/workflow-tengo:slices")
 maps := import("@platforma-sdk/workflow-tengo:maps")
 pt := import("@platforma-sdk/workflow-tengo:pt")
+text := import("text")
 
 self.defineOutputs("tsv", "stats")
 
@@ -40,16 +41,20 @@ self.body(func(inputs) {
 	}
 
 	// Rename original columns to canonical IDs.
+	// Strip BOM (\ufeff) from original column names before building rename expressions
 	renameExpressions := []
 	for canonical in maps.getKeys(columnsInfo.columnMapping) {
 		original := columnsInfo.columnMapping[canonical]
-		if original != undefined && canonical != original {
-			renameExpressions = append(renameExpressions, pt.col(original).alias(canonical))
+		if original == undefined { continue }
+		cleanOriginal := text.trim_prefix(original, "\ufeff")
+		if canonical != cleanOriginal {
+			renameExpressions = append(renameExpressions, pt.col(cleanOriginal).alias(canonical))
 		}
 	}
 	if len(renameExpressions) > 0 {
 		df = df.withColumns(renameExpressions...)
 	}
+
 
 	// Split into heavy and light subsets
 	heavyDf := df.filter(pt.col("chain").strSlice(0, 3).eq("IGH"))
@@ -89,9 +94,19 @@ self.body(func(inputs) {
 	heavyDf = heavyDf.select(heavyKeepCols...)
 	lightDf = lightDf.select(lightKeepCols...)
 
-	// Inner join on name (1:1 assumption)
-	pairedDf := heavyDf.join(lightDf, { how: "inner", on: ["name"], coalesce: true })
+	// Full outer join on name: keep rows that only have a heavy or only a light chain
+	pairedDf := heavyDf.join(lightDf, { how: "full", on: ["name"], coalesce: true })
 	pairedDf = pairedDf.withColumns(pt.col("name").alias("clonotypeKey"))
+
+	// Fill nulls left by the outer join (name present on only one side) with empty string
+	fillExprs := []
+	for col in nonNameCols {
+		fillExprs = append(fillExprs, pt.col(col + "_heavy").fillNull("").alias(col + "_heavy"))
+		fillExprs = append(fillExprs, pt.col(col + "_light").fillNull("").alias(col + "_light"))
+	}
+	if len(fillExprs) > 0 {
+		pairedDf = pairedDf.withColumns(fillExprs...)
+	}
 
 	// Synthetic abundance
 	pairedDf = pairedDf.withColumns(pt.lit(1).cast("Int64").alias("read-count"))
