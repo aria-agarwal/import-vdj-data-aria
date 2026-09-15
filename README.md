@@ -9,6 +9,7 @@ This block aims to normalize the data into standard clonotype datasets that down
       been paired by an upstream tool, and import the data as is. 
 
 **Key Changes Made:**
+
 **1. Simple Paired Format**
       
       1. Created new file called infer-columns-simple-paired.lib.tengo. This file defines the column spec definitions, 
